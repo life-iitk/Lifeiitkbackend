@@ -1,1 +1,5 @@
 django
+re
+psycopg2
+requests
+bs4
