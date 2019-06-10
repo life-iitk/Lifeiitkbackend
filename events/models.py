@@ -1,4 +1,5 @@
 from django.db import models
+from tags.models import TagModel
 
 # Create your models here.
 class EventModel(models.Model):
@@ -9,3 +10,4 @@ class EventModel(models.Model):
     time = models.TimeField()
     venue = models.CharField(max_length=20)
     venue_id = models.IntegerField()
+	tags = models.ManyToManyField(TagModel)
