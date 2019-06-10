@@ -46,6 +46,8 @@ INSTALLED_APPS = [
     'events.apps.EventsConfig',
     'tags.apps.TagsConfig',
     'users.apps.UsersConfig',
+    'acads.apps.AcadsConfig',
+    'privilege.apps.PrivilegeConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
