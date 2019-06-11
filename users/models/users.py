@@ -3,7 +3,6 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from acads.models import AcadsModel
 from tags.models import TagModel
-from privilege.models import privileges
 
 
 class User(models.Model):
@@ -22,4 +21,5 @@ class User(models.Model):
     por = JSONField(default=dict, null=True)
     earlier_login = models.BooleanField(default=0, null=True)
     acads = models.ManyToManyField(AcadsModel)
-    tags = models.ManyToManyField(TagModel, through="privileges")
+    owner = models.ManyToManyField(TagModel, through="privilege.privileges")
+    tags = models.ManyToManyField(TagModel, related_name="tags")
