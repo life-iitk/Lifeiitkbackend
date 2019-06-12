@@ -1,3 +1,9 @@
-from django.shortcuts import render
+from rest_framework.generics import RetrieveAPIView
 
-# Create your views here.
+from .models import EventModel
+from .Serializer import EventSerializer
+
+class SingleEventView(RetrieveAPIView):
+    queryset = EventModel.objects.all()
+    serializer_class = EventSerializer
+
