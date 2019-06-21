@@ -14,4 +14,4 @@ class EventModel(models.Model):
     venue_id = models.IntegerField()
     tags = models.ManyToManyField(TagModel)
     acads = models.ForeignKey(AcadsModel, on_delete=models.CASCADE)
-    acad_state = models.BooleanField()
+    acad_state = models.BooleanField(default = False)
