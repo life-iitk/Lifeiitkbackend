@@ -4,6 +4,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from imaplib import IMAP4
 from .models.users import User
+from rest_framework.decorators import api_view
+
 
 
 class LoginView(APIView):
@@ -43,4 +45,20 @@ class LogoutView(APIView):
             del request.session["username"]
             return Response(status = status.HTTP_200_OK)
         return Response(status = status.HTTP_401_UNAUTHORIZED)              #Trying to logout without logging in
-        
+
+
+@api_view(['PUT', ])
+def EditAPI(request):
+    if request.method == 'PUT':
+        if request.session.has_key("username"):
+            user = User.objects.get(username=request.session["username"])
+            if len(request.data["fblink"]) != 0:
+                user.fblink = request.data.get("fblink", "")
+                fb = request.data.get("fblink","")
+                user.fblink = fb
+                user.save()
+                return Response(status = status.HTTP_200_OK)
+            return Response(status = status.HTTP_204_NO_CONTENT)
+        return Response(status = status.HTTP_401_UNAUTHORIZED)
+
+
