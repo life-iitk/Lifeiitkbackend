@@ -1,1 +1,7 @@
 django
+re
+psycopg2
+requests
+bs4
+djangorestframework
+django-rest-auth
