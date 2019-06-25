@@ -3,6 +3,7 @@ from rest_framework.generics import RetrieveAPIView, ListAPIView
 from .models import EventModel
 from .Serializer import EventSerializer
 from rest_framework.decorators import api_view
+from users.utils import IsLoggedIn
 
 from datetime import date
 today = date.today()
@@ -28,3 +29,22 @@ class VenueEventView(ListAPIView):
         if (query_venue is not None):
             return EventModel.objects.filter(date__year=today.year, date__month=today.month, date__day=today.day, venue=query_venue).order_by("time")
         return EventModel.objects.all()
+
+class FeedEventView(ListAPIView):
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        user = IsLoggedIn(self.request)
+        if user is not None:
+            print(EventModel.objects.all()[0].tags, EventModel.objects.all()[1].tags)
+            tags = user.tags.all()
+            tag_ids = [o.tag_id for o in tags]
+            events = EventModel.objects.all()
+            event_ids = list()
+            for objects in events:
+                event_tags = objects.tags.all()
+                for tags in event_tags:
+                    if tags.tag_id in tag_ids:
+                        event_ids.append(objects.event_id)
+            return EventModel.objects.filter(event_id__in=event_ids)
+        return None
