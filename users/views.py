@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from imaplib import IMAP4
 from .models.users import User
 from rest_framework.decorators import api_view
+from acads.models import AcadsModel
 
 
 
@@ -62,3 +63,14 @@ def EditAPI(request):
         return Response(status = status.HTTP_401_UNAUTHORIZED)
 
 
+def AcadsAPI(request):
+    if request.method=='PUT':
+        username = request.session['username']
+        u = User.objects.get(username = username)
+        a = AcadsModel.objects.get(course_id = request.data.get("course_id"))
+        if a is not None:
+            u.acads.add(a)
+            u.save()
+            return Response(status= status.HTTP_200_OK)
+        else:
+            return Response(status = status.HTTP_400_BAD_REQUEST)
