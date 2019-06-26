@@ -6,7 +6,8 @@ from imaplib import IMAP4
 from .models.users import User
 from rest_framework.decorators import api_view
 from acads.models import AcadsModel
-
+from tags.models import TagModel
+from .utils import IsLoggedIn
 
 
 class LoginView(APIView):
@@ -15,7 +16,8 @@ class LoginView(APIView):
     """
     
     def post(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+        user = IsLoggedIn(request)
+        if user is not None :
             return Response(status = status.HTTP_400_BAD_REQUEST)
         username = request.data.get("username", "")
         password = request.data.get("password", "")
@@ -51,8 +53,8 @@ class LogoutView(APIView):
 @api_view(['PUT', ])
 def EditAPI(request):
     if request.method == 'PUT':
-        if request.session.has_key("username"):
-            user = User.objects.get(username=request.session["username"])
+        user = IsLoggedIn(request)
+        if user is not None:
             if len(request.data["fblink"]) != 0:
                 user.fblink = request.data.get("fblink", "")
                 fb = request.data.get("fblink","")
@@ -65,12 +67,31 @@ def EditAPI(request):
 
 def AcadsAPI(request):
     if request.method=='PUT':
-        username = request.session['username']
-        u = User.objects.get(username = username)
-        a = AcadsModel.objects.get(course_id = request.data.get("course_id"))
-        if a is not None:
-            u.acads.add(a)
-            u.save()
-            return Response(status= status.HTTP_200_OK)
-        else:
-            return Response(status = status.HTTP_400_BAD_REQUEST)
+        user = IsLoggedIn(request)
+        if user is not None:
+            request.session["username"] = user.username                      #Starting session manually
+            a = AcadsModel.objects.get(course_id = request.data.get("course_id"))
+            if a is not None:
+                user.acads.add(a)
+                user.save()
+                return Response(status= status.HTTP_200_OK)
+            else:
+                return Response(status = status.HTTP_400_BAD_REQUEST)
+        return Response(status = status.HTTP_401_UNAUTHORIZED)
+
+            
+@api_view(['PUT', ])
+def TagsAPI(request):
+    if request.method=='PUT':
+        user = IsLoggedIn(request)
+        if user is not None:
+            request.session["username"] = user.username                      #Starting session manually
+            t = TagModel.objects.get(tag_id = request.data.get("tag_id"))
+            if t is not None:
+                user.tags.add(t)
+                user.save()
+                return Response(status = status.HTTP_200_OK)
+            else:
+                return Response(status= status.HTTP_400_BAD_REQUEST)
+        return Response(status = status.HTTP_401_UNAUTHORIZED)
+
