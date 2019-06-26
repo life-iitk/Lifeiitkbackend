@@ -58,6 +58,9 @@ class Feed_MonthEventView(ListAPIView):
         user = IsLoggedIn(self.request)
         if user is not None:
             print(EventModel.objects.all()[0].tags, EventModel.objects.all()[1].tags)
+            query_month = self.request.GET.get("month")
+            query_year = today.year
+            query_year = self.request.GET.get("year")
             tags = user.tags.all()
             tag_ids = [o.tag_id for o in tags]
             events = EventModel.objects.all()
@@ -67,5 +70,5 @@ class Feed_MonthEventView(ListAPIView):
                 for tags in event_tags:
                     if tags.tag_id in tag_ids:
                         event_ids.append(objects.event_id)
-            return EventModel.objects.filter(event_id__in=event_ids, date__year=today.year, date__month=today.month).order_by("date", "time")
+            return EventModel.objects.filter(event_id__in=event_ids, date__year=query_year, date__month=query_month).order_by("date", "time")
         return None
