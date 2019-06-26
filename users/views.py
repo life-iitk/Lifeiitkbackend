@@ -6,8 +6,9 @@ from imaplib import IMAP4
 from .models.users import User
 from rest_framework.decorators import api_view
 from acads.models import AcadsModel
-
-
+from .utils import IsLoggedIn
+from .Serializer import UserSerializer
+from django.http import JsonResponse
 
 class LoginView(APIView):
     """
@@ -15,7 +16,8 @@ class LoginView(APIView):
     """
     
     def post(self, request, *args, **kwargs):
-        if request.user.is_authenticated:
+        user = IsLoggedIn(request)
+        if user is not None:
             return Response(status = status.HTTP_400_BAD_REQUEST)
         username = request.data.get("username", "")
         password = request.data.get("password", "")
@@ -23,7 +25,7 @@ class LoginView(APIView):
             c = IMAP4('newmailhost.cc.iitk.ac.in')
             c.login(username, password)     #If user can authenticate then he is in our database
         except:
-            return Response(status = status.HTTP_401_UNAUTHORIZED)              #Login fails
+            return Response(status = status.HTTP_400_BAD_REQUEST)              #Login fails
 
         user = User.objects.get(username=username)
         
@@ -31,10 +33,10 @@ class LoginView(APIView):
             request.session["username"] = username                      #Starting session manually
             return Response(status = status.HTTP_200_OK)
         
-        return Response(status = status.HTTP_401_UNAUTHORIZED)
+        return Response(status = status.HTTP_400_BAD_REQUEST)
     
     def get(self, request):
-        if request.session.has_key("username"):
+        if IsLoggedIn(request) is not None:
             return Response(status = status.HTTP_400_BAD_REQUEST)
         return Response(status = status.HTTP_200_OK)
 
@@ -42,7 +44,7 @@ class LoginView(APIView):
 class LogoutView(APIView):
     
     def get(self, request):
-        if request.session.has_key("username"):
+        if IsLoggedIn(request) is not None:
             del request.session["username"]
             return Response(status = status.HTTP_200_OK)
         return Response(status = status.HTTP_401_UNAUTHORIZED)              #Trying to logout without logging in
@@ -51,8 +53,8 @@ class LogoutView(APIView):
 @api_view(['PUT', ])
 def EditAPI(request):
     if request.method == 'PUT':
-        if request.session.has_key("username"):
-            user = User.objects.get(username=request.session["username"])
+        user = IsLoggedIn(request)
+        if user is not None:
             if len(request.data["fblink"]) != 0:
                 user.fblink = request.data.get("fblink", "")
                 fb = request.data.get("fblink","")
@@ -65,12 +67,20 @@ def EditAPI(request):
 
 def AcadsAPI(request):
     if request.method=='PUT':
-        username = request.session['username']
-        u = User.objects.get(username = username)
+        u = IsLoggedIn(request)
         a = AcadsModel.objects.get(course_id = request.data.get("course_id"))
-        if a is not None:
+        if a is not None and u is not None:
             u.acads.add(a)
             u.save()
             return Response(status= status.HTTP_200_OK)
         else:
             return Response(status = status.HTTP_400_BAD_REQUEST)
+
+@api_view(('GET',))
+def user_details(request):
+    user = IsLoggedIn(request)
+    if user is None:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = UserSerializer(user)
+    return JsonResponse(serializer.data)
