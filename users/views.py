@@ -6,9 +6,10 @@ from imaplib import IMAP4
 from .models.users import User
 from rest_framework.decorators import api_view
 from acads.models import AcadsModel
+from .Serializer import UserSerializer
+from django.http import JsonResponse
 from tags.models import TagModel
 from .utils import IsLoggedIn
-
 
 class LoginView(APIView):
     """
@@ -25,7 +26,7 @@ class LoginView(APIView):
             c = IMAP4('newmailhost.cc.iitk.ac.in')
             c.login(username, password)     #If user can authenticate then he is in our database
         except:
-            return Response(status = status.HTTP_401_UNAUTHORIZED)              #Login fails
+            return Response(status = status.HTTP_400_BAD_REQUEST)              #Login fails
 
         user = User.objects.get(username=username)
         
@@ -33,10 +34,10 @@ class LoginView(APIView):
             request.session["username"] = username                      #Starting session manually
             return Response(status = status.HTTP_200_OK)
         
-        return Response(status = status.HTTP_401_UNAUTHORIZED)
+        return Response(status = status.HTTP_400_BAD_REQUEST)
     
     def get(self, request):
-        if request.session.has_key("username"):
+        if IsLoggedIn(request) is not None:
             return Response(status = status.HTTP_400_BAD_REQUEST)
         return Response(status = status.HTTP_200_OK)
 
@@ -44,7 +45,7 @@ class LoginView(APIView):
 class LogoutView(APIView):
     
     def get(self, request):
-        if request.session.has_key("username"):
+        if IsLoggedIn(request) is not None:
             del request.session["username"]
             return Response(status = status.HTTP_200_OK)
         return Response(status = status.HTTP_401_UNAUTHORIZED)              #Trying to logout without logging in
@@ -94,4 +95,3 @@ def TagsAPI(request):
             else:
                 return Response(status= status.HTTP_400_BAD_REQUEST)
         return Response(status = status.HTTP_401_UNAUTHORIZED)
-
