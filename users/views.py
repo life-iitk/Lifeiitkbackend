@@ -95,3 +95,12 @@ def TagsAPI(request):
             else:
                 return Response(status= status.HTTP_400_BAD_REQUEST)
         return Response(status = status.HTTP_401_UNAUTHORIZED)
+
+@api_view(('GET',))
+def user_details(request):
+    user = IsLoggedIn(request)
+    if user is None:
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+    
+    serializer = UserSerializer(user)
+    return JsonResponse(serializer.data)
