@@ -1,12 +1,18 @@
-from rest_framework.generics import RetrieveAPIView, ListAPIView
-
+from rest_framework.generics import RetrieveAPIView, ListAPIView,CreateAPIView
 from .models import EventModel
 from .Serializer import EventSerializer
 from rest_framework.decorators import api_view
 from users.utils import IsLoggedIn
-
+from tags.models import TagModel
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from datetime import date
+from rest_framework import status
+
+
 today = date.today()
+def sorteventid(val):
+    return val[0]
 
 class SingleEventView(RetrieveAPIView):
     queryset = EventModel.objects.all()
@@ -72,3 +78,33 @@ class Feed_MonthEventView(ListAPIView):
                         event_ids.append(objects.event_id)
             return EventModel.objects.filter(event_id__in=event_ids, date__year=query_year, date__month=query_month).order_by("date", "time")
         return None
+
+@api_view(['POST', ])
+def CreateEventAPI(request):
+    if request.method == 'POST':
+        title = request.data.get("title")
+        description = request.data.get("description")
+        date = request.data.get("date")
+        time = request.data.get("time")
+        venue = request.data.get("venue")
+        venue_id = request.data.get("venue_id")
+        tags = request.data.get("tags")
+        eventlist = EventModel.objects.all().order_by("event_id")
+        event_id = eventlist.reverse()[0].event_id
+        print(event_id)
+        data = EventModel(
+            event_id = event_id + 1,
+            title = title,
+            description= description,
+            date = date,
+            time= time,
+            venue = venue,
+            venue_id = venue_id
+        )
+        data.save()
+        for tag in tags:
+            tag_id = tag.get("tag_id")
+            tag_row = TagModel.objects.get(tag_id = tag_id)
+            data.tags.add(tag_row)
+        data.save()
+        return Response(status = status.HTTP_200_OK)
