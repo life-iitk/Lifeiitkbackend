@@ -44,7 +44,6 @@ class FeedEventView(ListAPIView):
     def get_queryset(self):
         user = IsLoggedIn(self.request)
         if user is not None:
-            print(EventModel.objects.all()[0].tags, EventModel.objects.all()[1].tags)
             tags = user.tags.all()
             tag_ids = [o.tag_id for o in tags]
             events = EventModel.objects.all()
@@ -54,7 +53,7 @@ class FeedEventView(ListAPIView):
                 for tags in event_tags:
                     if tags.tag_id in tag_ids:
                         event_ids.append(objects.event_id)
-            return EventModel.objects.filter(event_id__in=event_ids).order_by("date__year", "date__month", "date__day", "time")
+            return EventModel.objects.filter(event_id__in=event_ids).order_by("date__year", "date__month", "date__day", "start_time")
         return None
 
 class Feed_MonthEventView(ListAPIView):
@@ -85,7 +84,8 @@ def CreateEventAPI(request):
         title = request.data.get("title")
         description = request.data.get("description")
         date = request.data.get("date")
-        time = request.data.get("time")
+        start_time = request.data.get("start_time")
+        end_time = request.data.get("end_time")
         venue = request.data.get("venue")
         venue_id = request.data.get("venue_id")
         tags = request.data.get("tags")
