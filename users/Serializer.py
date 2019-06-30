@@ -28,3 +28,20 @@ class UserSerializer(serializers.ModelSerializer):
             "acads",
             "owned"
         )
+class UserOwnedSerializer(serializers.ModelSerializer):
+    owned = TagSerializer(read_only=True, many=True)
+    class Meta:
+        model = User
+        fields = (
+            "roll",
+            "owned"
+        )
+
+class UserAcadsSerializer(serializers.ModelSerializer):
+    acads = AcadsSerializer(read_only=True, many=True)
+    class Meta:
+        model = User
+        fields = (
+            "roll",
+            "acads"
+        )

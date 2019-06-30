@@ -6,10 +6,12 @@ from imaplib import IMAP4
 from .models.users import User
 from rest_framework.decorators import api_view
 from acads.models import AcadsModel
-from .Serializer import UserSerializer
+from .Serializer import UserSerializer , UserOwnedSerializer, UserAcadsSerializer
 from django.http import JsonResponse
 from tags.models import TagModel
 from .utils import IsLoggedIn
+import json
+
 
 class LoginView(APIView):
     """
@@ -35,7 +37,7 @@ class LoginView(APIView):
             return Response(status = status.HTTP_200_OK)
         
         return Response(status = status.HTTP_400_BAD_REQUEST)
-    
+
     def get(self, request):
         if IsLoggedIn(request) is not None:
             return Response(status = status.HTTP_400_BAD_REQUEST)
@@ -70,37 +72,56 @@ def AcadsAPI(request):
     if request.method=='PUT':
         user = IsLoggedIn(request)
         if user is not None:
-            request.session["username"] = user.username                      #Starting session manually
-            a = AcadsModel.objects.get(course_id = request.data.get("course_id"))
+            request.session["username"] = user.username
+            data = json.loads(request.body)
+            course_id = data["course_id"]
+            a = AcadsModel.objects.get(course_id = course_id)
             if a is not None:
                 user.acads.add(a)
                 user.save()
-                return Response(status= status.HTTP_200_OK)
+                return JsonResponse({'status': 'ok'}, status=200)
             else:
-                return Response(status = status.HTTP_400_BAD_REQUEST)
-        return Response(status = status.HTTP_401_UNAUTHORIZED)
+                return JsonResponse({'Error': 'Bad Request'}, status=400)
+        return JsonResponse({'Error': 'Unauthorized'}, status=401)
+    elif request.method=='GET':
+        user = IsLoggedIn(request)
+        if user is None:
+            HttpResponse(status=204)
+        serializer = UserAcadsSerializer(user)
 
-            
-@api_view(['PUT', ])
+        return JsonResponse(serializer.data)
+
 def TagsAPI(request):
     if request.method=='PUT':
         user = IsLoggedIn(request)
         if user is not None:
-            request.session["username"] = user.username                      #Starting session manually
-            t = TagModel.objects.get(tag_id = request.data.get("tag_id"))
+            request.session["username"] = user.username
+            data = json.loads(request.body)
+            tid = data["tag_id"]
+            t = TagModel.objects.get(tag_id = tid)
             if t is not None:
                 user.tags.add(t)
                 user.save()
-                return Response(status = status.HTTP_200_OK)
+                return JsonResponse({'status': 'ok'}, status=200)
             else:
-                return Response(status= status.HTTP_400_BAD_REQUEST)
-        return Response(status = status.HTTP_401_UNAUTHORIZED)
+                return JsonResponse({'Error': 'Bad Request'}, status=400)
+        return JsonResponse({'Error': 'Unauthorized'}, status=401)
 
-@api_view(('GET',))
+@api_view(['GET',])
 def user_details(request):
-    user = IsLoggedIn(request)
-    if user is None:
-        return Response(status=status.HTTP_400_BAD_REQUEST)
-    
-    serializer = UserSerializer(user)
-    return JsonResponse(serializer.data)
+    if request.method=='GET':
+        user = IsLoggedIn(request)
+        if user is None:
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = UserSerializer(user)
+        return JsonResponse(serializer.data)
+
+def OwnedTagAPI(request):
+    if request.method=='GET':
+        user = IsLoggedIn(request)
+        if user is None:
+            HttpResponse(status=204)
+        serializer = UserOwnedSerializer(user)
+
+        return JsonResponse(serializer.data)
