@@ -1,8 +1,9 @@
 django
-re
+regex
 psycopg2
 requests
 bs4
 djangorestframework
 django-rest-auth
-djangorestframework django-cors-headers
+djangorestframework
+django-cors-headers
