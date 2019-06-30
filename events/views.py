@@ -84,11 +84,8 @@ def CreateEventAPI(request):
         date = request.data.get("date")
         start_time = request.data.get("start_time")
         end_time = request.data.get("end_time")
-<<<<<<< HEAD
-=======
         day_long = request.data.get("day_long")
         summary = request.data.get("summary")
->>>>>>> corrected APIs
         venue = request.data.get("venue")
         venue_id = request.data.get("venue_id")
         tags = request.data.get("tags")
