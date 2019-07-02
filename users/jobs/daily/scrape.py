@@ -107,27 +107,27 @@ class Job(DailyJob):
                     )
                     c.execute(
                         "INSERT INTO users_user (roll, username,image,name,program,dept,hall,room,blood_group,gender,hometown) VALUES ("
-                        + roll
+                        + roll.replace("'", "")
                         + ", '"
-                        + username
+                        + username.replace("'", "")
                         + "','"
-                        + image
+                        + image.replace("'", "")
                         + "', '"
-                        + name
+                        + name.replace("'", "")
                         + "', '"
-                        + program
+                        + program.replace("'", "")
                         + "', '"
-                        + dept
+                        + dept.replace("'", "")
                         + "', '"
-                        + hall
+                        + hall.replace("'", "")
                         + "', '"
-                        + room
+                        + room.replace("'", "")
                         + "', '"
-                        + blood_group
+                        + blood_group.replace("'", "")
                         + "', '"
-                        + gender
+                        + gender.replace("'", "")
                         + "', '"
-                        + hometown
+                        + hometown.replace("'", "")
                         + "') ON CONFLICT(roll) DO UPDATE SET name=Excluded.name, image=Excluded.image, username=Excluded.username, program=Excluded.program, dept=Excluded.dept, hall=Excluded.hall, blood_group=Excluded.blood_group,gender=Excluded.gender,hometown=Excluded.hometown,room=Excluded.room"
                     )
                     # c.execute("INSERT INTO users_user (user_img ) VALUES" ('http://oa.cc.iitk.ac.in/Oa/Jsp/Photo/' + str(roll) + '_0.jpg'))
