@@ -21,5 +21,6 @@ class EventSerializer(serializers.ModelSerializer):
             "acads",
             "day_long",
             "summary",
-            "acad_state"
+            "acad_state",
+            "hash_tags"
         )

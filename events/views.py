@@ -8,9 +8,12 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from datetime import date
 from rest_framework import status
-
+from django.db.models import Q
+import datetime
 
 today = date.today()
+now = datetime.datetime.now()
+
 def sorteventid(val):
     return val[0]
 
@@ -76,42 +79,75 @@ class Feed_MonthEventView(ListAPIView):
             return EventModel.objects.filter(event_id__in=event_ids, date__year=query_year, date__month=query_month).order_by("date", "start_time")
         return None
 
-@api_view(['POST', ])
+class TagEventView(ListAPIView):
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        get_query_tag = self.request.GET.get("tag_id")
+        query_tag = TagModel.objects.filter(tag_id=get_query_tag)
+        print(get_query_tag)
+        if query_tag.exists():
+            tag = query_tag[0]
+            eventList = (
+                EventModel.objects.filter(tags=tag)
+                .filter(Q(date=now.date()) | Q(date__gt=now.date()))
+                .order_by("-date")
+            )
+            return eventList
+        return None
+
+@api_view(["POST"])
 def CreateEventAPI(request):
-    if request.method == 'POST':
-        title = request.data.get("title")
-        description = request.data.get("description")
-        date = request.data.get("date")
-        start_time = request.data.get("start_time")
-        end_time = request.data.get("end_time")
-        day_long = request.data.get("day_long")
-        summary = request.data.get("summary")
-        venue = request.data.get("venue")
-        venue_id = request.data.get("venue_id")
-        tags = request.data.get("tags")
-        eventlist = EventModel.objects.all().order_by("event_id")
-        if len(eventlist)==0:
-            event_id = 0
-        else:
-            event_id = eventlist.reverse()[0].event_id
-        print(event_id)
-        data = EventModel(
-            event_id = event_id + 1,
-            title = title,
-            description= description,
-            date = date,
-            start_time= start_time,
-            end_time= end_time,
-            day_long= day_long,
-            summary= summary,
-            venue = venue,
-            venue_id = venue_id
-        )
-        data.save()
-        if tags is not None:
-            for tag in tags:
-                tag_id = tag.get("tag_id")
-                tag_row = TagModel.objects.get(tag_id = tag_id)
-                data.tags.add(tag_row)
-        data.save()
-        return Response(status = status.HTTP_200_OK)
+    if request.method == "POST":
+        user = IsLoggedIn(request)
+        if user is not None:
+            owned_tags = user.owned.all()
+            title = request.data.get("title")
+            description = request.data.get("description")
+            date = request.data.get("date")
+            start_time = request.data.get("start_time")
+            end_time = request.data.get("end_time")
+            day_long = request.data.get("day_long")
+            summary = request.data.get("summary")
+            venue = request.data.get("venue")
+            venue_id = request.data.get("venue_id")
+            tag_id = request.data.get("tag_id")
+            hash_tags = request.data.get("hash_tags")
+            eventlist = EventModel.objects.all().order_by("event_id")
+            tags = TagModel.objects.filter(tag_id=tag_id)
+            if len(tags) == 1:
+                if tags[0] in owned_tags:
+                    if len(eventlist) == 0:
+                        event_id = 0
+                    else:
+                        event_id = eventlist.reverse()[0].event_id
+                    print(event_id)
+                    data = EventModel(
+                        event_id=event_id + 1,
+                        title=title,
+                        description=description,
+                        date=date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        day_long=day_long,
+                        summary=summary,
+                        venue=venue,
+                        venue_id=venue_id,
+                        hash_tags=hash_tags,
+                    )
+                    data.save()
+                    data.tags.add(tags[0])
+                    data.save()
+                    return Response(status=status.HTTP_200_OK)
+                return Response(status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(["DELETE"])
+def DeleteEventAPI(request):
+    if request.method == "DELETE":
+        event_id = request.data.get("event_id")
+        event = EventModel.objects.filter(event_id=event_id)
+        if event.exists():
+            event[0].delete()
+            return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_404_NOT_FOUND)

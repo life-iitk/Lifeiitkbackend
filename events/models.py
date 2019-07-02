@@ -1,6 +1,7 @@
 from django.db import models
 from tags.models import TagModel
 from acads.models import AcadsModel
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class EventModel(models.Model):
@@ -17,3 +18,4 @@ class EventModel(models.Model):
     tags = models.ManyToManyField(TagModel)
     acads = models.ManyToManyField(AcadsModel)
     acad_state = models.BooleanField(default=False)
+    hash_tags = ArrayField(models.CharField(max_length=40), blank=True)

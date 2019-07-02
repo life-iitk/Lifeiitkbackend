@@ -10,6 +10,7 @@ from pandas import read_csv
 import time
 import tabula
 from django.utils.dateparse import parse_date, parse_time
+import json
 
 semester = input("Enter semester (1 or 2) : ")
 tabula.convert_into(
@@ -150,7 +151,8 @@ class Job(DailyJob):
                     pk = pk + 1
                     integer = str(pk)
                     day_long = "False"
-                    sql = "INSERT INTO events_eventmodel (event_id,title,date,start_time,end_time,day_long,venue,venue_id,acad_state) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(event_id) DO UPDATE SET title=Excluded.title, date=Excluded.date, start_time=Excluded.start_time, end_time=Excluded.end_time, day_long=Excluded.day_long, venue=Excluded.venue, venue_id=Excluded.venue_id, acad_state=Excluded.acad_state"
+                    hash_tags = ["#acads"]
+                    sql = "INSERT INTO events_eventmodel (event_id,title,date,start_time,end_time,day_long,venue,venue_id,acad_state,hash_tags) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(event_id) DO UPDATE SET title=Excluded.title, date=Excluded.date, start_time=Excluded.start_time, end_time=Excluded.end_time, day_long=Excluded.day_long, venue=Excluded.venue, venue_id=Excluded.venue_id, acad_state=Excluded.acad_state, hash_tags = Excluded.hash_tags"
                     c.execute(
                         sql,
                         (
@@ -163,6 +165,7 @@ class Job(DailyJob):
                             venue,
                             venue_id,
                             booln,
+                            hash_tags,
                         ),
                     )
                     conn.commit()
