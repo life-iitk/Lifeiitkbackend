@@ -21,4 +21,5 @@ urlpatterns = [
     path('users/', include('users.urls')),
     path('events/', include('events.urls')),
     path("acads/", include("acads.urls")),
+    path('tags/',include("tags.urls"))
 ]
