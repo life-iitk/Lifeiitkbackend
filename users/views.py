@@ -97,10 +97,10 @@ def TagsAPI(request):
         if user is not None:
             request.session["username"] = user.username
             data = json.loads(request.body)
-            tid = data["tag_id"]
-            t = TagModel.objects.get(tag_id = tid)
-            if t is not None:
-                user.tags.add(t)
+            name = data["name"]
+            t = TagModel.objects.filter(name = name)
+            if t.exists():
+                user.tags.add(t[0])
                 user.save()
                 return JsonResponse({'status': 'ok'}, status=200)
             else:
