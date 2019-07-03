@@ -131,8 +131,8 @@ def DeleteAcadAPI(request):
     if request.method == "DELETE":
         user = IsLoggedIn(request)
         if user is not None:
-            course_id = request.data.get("course_id")
-            course = user.acads.filter(course_id=course_id)
+            course_code = request.data.get("code")
+            course = user.acads.filter(code=course_code)
             print(course)
             if course.exists():
                 user.acads.remove(course[0])
