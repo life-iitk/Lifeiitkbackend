@@ -18,4 +18,4 @@ class EventModel(models.Model):
     tags = models.ManyToManyField(TagModel)
     acads = models.ManyToManyField(AcadsModel)
     acad_state = models.BooleanField(default=False)
-    hash_tags = ArrayField(models.CharField(max_length=40), blank=True)
+    hash_tags = ArrayField(models.CharField(max_length=40), blank=True, default = list)

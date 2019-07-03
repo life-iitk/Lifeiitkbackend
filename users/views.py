@@ -11,7 +11,7 @@ from django.http import JsonResponse
 from tags.models import TagModel
 from .utils import IsLoggedIn
 import json
-
+from django.views.decorators.csrf import csrf_exempt
 
 class LoginView(APIView):
     """
@@ -67,15 +67,15 @@ def EditAPI(request):
             return Response(status = status.HTTP_204_NO_CONTENT)
         return Response(status = status.HTTP_401_UNAUTHORIZED)
 
-
+@csrf_exempt
 def AcadsAPI(request):
     if request.method=='PUT':
         user = IsLoggedIn(request)
         if user is not None:
             request.session["username"] = user.username
             data = json.loads(request.body)
-            course_id = data["course_id"]
-            a = AcadsModel.objects.get(course_id = course_id)
+            code = data["code"]
+            a = AcadsModel.objects.get(code = code)
             if a is not None:
                 user.acads.add(a)
                 user.save()
