@@ -130,13 +130,25 @@ def OwnedTagAPI(request):
 def DeleteAcadAPI(request):
     if request.method == "DELETE":
         user = IsLoggedIn(request)
-        print(user,"\n\n\n")
         if user is not None:
             course_id = request.data.get("course_id")
             course = user.acads.filter(course_id=course_id)
             print(course)
             if course.exists():
                 user.acads.remove(course[0])
+                return Response(status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_404_NOT_FOUND)
+    return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+@api_view(["DELETE"])
+def UnsubscribeTagsAPI(request):
+    if request.method == "DELETE":
+        user = IsLoggedIn(request)
+        if user is not None:
+            tag_id = request.data.get("tag_id")
+            tag = user.tags.filter(tag_id=tag_id)
+            if tag.exists():
+                user.tags.remove(tag[0])
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(status=status.HTTP_401_UNAUTHORIZED)

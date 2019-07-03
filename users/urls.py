@@ -1,4 +1,4 @@
-from .views import LoginView, LogoutView, EditAPI, AcadsAPI, user_details, TagsAPI ,OwnedTagAPI, DeleteAcadAPI
+from .views import LoginView, LogoutView, EditAPI, AcadsAPI, user_details, TagsAPI ,OwnedTagAPI, DeleteAcadAPI, UnsubscribeTagsAPI
 from django.urls import path
 
 urlpatterns = [
@@ -9,5 +9,6 @@ urlpatterns = [
     path('profile/', user_details),
     path('tags/',TagsAPI),
     path('owned/',OwnedTagAPI),
-    path("course/delete/", DeleteAcadAPI)
+    path("course/delete/", DeleteAcadAPI),
+    path("tags/delete/", UnsubscribeTagsAPI),
 ]
