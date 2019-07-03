@@ -14,8 +14,9 @@ class EventModel(models.Model):
     day_long = models.BooleanField(default=False)
     summary = models.CharField(max_length=500,null=True)
     venue = models.CharField(max_length=20)
-    venue_id = models.IntegerField()
+    venue_id = models.IntegerField(null = True)
     tags = models.ManyToManyField(TagModel)
     acads = models.ManyToManyField(AcadsModel)
     acad_state = models.BooleanField(default=False)
     hash_tags = ArrayField(models.CharField(max_length=40), blank=True, default = list)
+    

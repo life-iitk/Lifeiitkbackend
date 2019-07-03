@@ -10,6 +10,7 @@ from datetime import date
 from rest_framework import status
 from django.db.models import Q
 import datetime
+import re
 
 today = date.today()
 now = datetime.datetime.now()
@@ -104,7 +105,9 @@ def CreateEventAPI(request):
             owned_tags = user.owned.all()
             title = request.data.get("title")
             description = request.data.get("description")
-            date = request.data.get("date")
+            date_str = request.data.get("date")
+            match = re.search(r'\d{4}-\d{2}-\d{2}', date_str)
+            date = datetime.datetime.strptime(match.group(), '%Y-%m-%d').date()
             start_time = request.data.get("start_time")
             end_time = request.data.get("end_time")
             day_long = request.data.get("day_long")
@@ -121,7 +124,6 @@ def CreateEventAPI(request):
                         event_id = 0
                     else:
                         event_id = eventlist.reverse()[0].event_id
-                    print(event_id)
                     data = EventModel(
                         event_id=event_id + 1,
                         title=title,
