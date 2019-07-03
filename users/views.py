@@ -90,7 +90,7 @@ def AcadsAPI(request):
         serializer = UserAcadsSerializer(user)
 
         return JsonResponse(serializer.data)
-
+@csrf_exempt
 def TagsAPI(request):
     if request.method=='PUT':
         user = IsLoggedIn(request)
