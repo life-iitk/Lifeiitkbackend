@@ -8,7 +8,7 @@ from tags.models import TagModel
 class User(models.Model):
     roll = models.CharField(max_length=20, primary_key=True, unique=True)
     username = models.CharField(max_length=20)
-    image = models.ImageField(null=True, blank=True)
+    image = models.CharField(max_length=200,null=True, blank=True)
     name = models.CharField(max_length=100)
     program = models.CharField(max_length=20)
     dept = models.CharField(max_length=50)

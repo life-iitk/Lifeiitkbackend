@@ -1,4 +1,4 @@
-from .views import LoginView, LogoutView, EditAPI, AcadsAPI, user_details, TagsAPI ,OwnedTagAPI
+from .views import LoginView, LogoutView, EditAPI, AcadsAPI, user_details, TagsAPI ,OwnedTagAPI, DeleteAcadAPI
 from django.urls import path
 
 urlpatterns = [
@@ -8,5 +8,6 @@ urlpatterns = [
     path('acads/', AcadsAPI),
     path('profile/', user_details),
     path('tags/',TagsAPI),
-    path('owned/',OwnedTagAPI)
+    path('owned/',OwnedTagAPI),
+    path("course/delete/", DeleteAcadAPI)
 ]
