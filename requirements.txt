@@ -1,5 +1,5 @@
 django
-re
+regex
 psycopg2
 requests
 bs4

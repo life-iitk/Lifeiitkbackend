@@ -84,9 +84,9 @@ class TagEventView(ListAPIView):
     serializer_class = EventSerializer
 
     def get_queryset(self):
-        get_query_tag = self.request.GET.get("tag_id")
-        query_tag = TagModel.objects.filter(tag_id=get_query_tag)
-        print(get_query_tag)
+        get_query_tag = self.request.GET.get("tag_name")
+        query_tag = TagModel.objects.filter(name=get_query_tag)
+        #print(query_tag)
         if query_tag.exists():
             tag = query_tag[0]
             eventList = (
