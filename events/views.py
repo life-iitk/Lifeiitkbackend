@@ -94,7 +94,6 @@ class TagEventView(ListAPIView):
                 .filter(Q(date=now.date()) | Q(date__gt=now.date()))
                 .order_by("-date")
             )
-            return eventList
         return None
 
 @api_view(["POST"])
@@ -114,10 +113,10 @@ def CreateEventAPI(request):
             summary = request.data.get("summary")
             venue = request.data.get("venue")
             venue_id = request.data.get("venue_id")
-            tag_id = request.data.get("tag_id")
+            tag_name = request.data.get("tag_name")
             hash_tags = request.data.get("hash_tags")
             eventlist = EventModel.objects.all().order_by("event_id")
-            tags = TagModel.objects.filter(tag_id=tag_id)
+            tags = TagModel.objects.filter(name=tag_name)
             if len(tags) == 1:
                 if tags[0] in owned_tags:
                     if len(eventlist) == 0:
