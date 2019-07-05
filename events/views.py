@@ -94,6 +94,8 @@ class TagEventView(ListAPIView):
                 .filter(Q(date=now.date()) | Q(date__gt=now.date()))
                 .order_by("-date")
             )
+
+            return eventList
         return None
 
 @api_view(["POST"])
