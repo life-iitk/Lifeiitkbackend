@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 from django_extensions.management.jobs import DailyJob
+import standalone
 
+standalone.run("lifeiitkbackend.settings")
+from users.models.users import User
 from bs4 import BeautifulSoup
 import re
 import requests
-import psycopg2
 
-conn = psycopg2.connect(
-    host="localhost", database="students", user="aditya", password="password"
-)
-c = conn.cursor()
 s = requests.Session()
 s.get("https://oa.cc.iitk.ac.in/Oa/Jsp/Main_Frameset.jsp")
 s.get("https://oa.cc.iitk.ac.in/Oa/Jsp/Main_Intro.jsp?frm='SRCH'")
@@ -48,7 +46,7 @@ soup = BeautifulSoup(r.text, "html.parser")
 
 
 class Job(DailyJob):
-    def process_response_soup(self, soup, c):
+    def process_response_soup(self, soup):
 
         for link in soup.select(".TableText a"):
             roll = link.get_text().strip()
@@ -105,34 +103,23 @@ class Job(DailyJob):
                     image = (
                         "http://oa.cc.iitk.ac.in/Oa/Jsp/Photo/" + str(roll) + "_0.jpg"
                     )
-                    c.execute(
-                        "INSERT INTO users_user (roll, username,image,name,program,dept,hall,room,blood_group,gender,hometown) VALUES ("
-                        + roll.replace("'", "")
-                        + ", '"
-                        + username.replace("'", "")
-                        + "','"
-                        + image.replace("'", "")
-                        + "', '"
-                        + name.replace("'", "")
-                        + "', '"
-                        + program.replace("'", "")
-                        + "', '"
-                        + dept.replace("'", "")
-                        + "', '"
-                        + hall.replace("'", "")
-                        + "', '"
-                        + room.replace("'", "")
-                        + "', '"
-                        + blood_group.replace("'", "")
-                        + "', '"
-                        + gender.replace("'", "")
-                        + "', '"
-                        + hometown.replace("'", "")
-                        + "') ON CONFLICT(roll) DO UPDATE SET name=Excluded.name, image=Excluded.image, username=Excluded.username, program=Excluded.program, dept=Excluded.dept, hall=Excluded.hall, blood_group=Excluded.blood_group,gender=Excluded.gender,hometown=Excluded.hometown,room=Excluded.room"
-                    )
-                    # c.execute("INSERT INTO users_user (user_img ) VALUES" ('http://oa.cc.iitk.ac.in/Oa/Jsp/Photo/' + str(roll) + '_0.jpg'))
+                    if len(User.objects.filter(roll=roll)) == 0:
+                        u = User(
+                            roll=roll,
+                            username=username,
+                            image=image,
+                            name=name,
+                            program=program,
+                            dept=dept,
+                            hall=hall,
+                            room=room,
+                            blood_group=blood_group,
+                            gender=gender,
+                            hometown=hometown,
+                        )
+                        u.save()
 
-    def execute(self, soup, c):
+    def execute(self, soup):
         for link in soup.select(".DivContent"):
             substituted = re.sub(r"\s+", " ", link.text)
             pattern = re.compile(
@@ -141,7 +128,7 @@ class Job(DailyJob):
             match = pattern.match(substituted)
             TOTAL = int(match.group(1))
             print("Total: {}".format(TOTAL))
-        self.process_response_soup(soup, c)
+        self.process_response_soup(soup)
 
         for i in range(12, TOTAL + 1, 12):
             payload["recpos"] = i
@@ -151,13 +138,11 @@ class Job(DailyJob):
                 data=payload,
             )
             soup = BeautifulSoup(r.text, "html.parser")
-            self.process_response_soup(soup, c)
+            self.process_response_soup(soup)
 
             print("Processed {}".format(i + 12))
-            conn.commit()
-        conn.close()
 
 
 x = Job()
-x.execute(soup, c)
+x.execute(soup)
 

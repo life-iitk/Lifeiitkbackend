@@ -10,3 +10,4 @@ json
 numpy
 tabula
 pandas
+standalone

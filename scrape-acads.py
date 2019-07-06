@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
 from django_extensions.management.jobs import DailyJob
+import os
+import standalone
 
+standalone.run("lifeiitkbackend.settings")
+from acads.models import AcadsModel
+from events.models import EventModel
 from bs4 import BeautifulSoup
 import re
 import requests
@@ -16,14 +21,11 @@ semester = input("Enter semester (1 or 2) : ")
 tabula.convert_into(
     "Course_Sem1.pdf", "output1.csv", output_format="csv", pages="all", guess=False
 )
-tabula.convert_into(
-    "Course_Sem2.pdf", "output2.csv", output_format="csv", pages="all", guess=False
-)
+# tabula.convert_into(
+#     "Course_Sem2.pdf", "output2.csv", output_format="csv", pages="all", guess=False
+# )
 
-conn = psycopg2.connect(
-    host="localhost", database="students", user="aditya", password="password"
-)
-c = conn.cursor()
+
 s = requests.Session()
 
 
@@ -82,19 +84,20 @@ def getArray(sem=1):
 
 
 array1 = getArray(semester)
-
 name, ids = getCourses(array1)
-pkacad = 0
+print(name)
 
 for course_ids in ids:
     index = ids.index(course_ids)
-    acad_name = name[index][:30]
-    pkacad = pkacad + 1
-    pkacads = str(pkacad)
-    c.execute(
-        "INSERT INTO acads_acadsmodel (course_id,name,code) VALUES (%s,%s,%s) ON CONFLICT(course_id) DO UPDATE SET name=Excluded.name, code=Excluded.code",
-        (pkacads, acad_name, course_ids),
-    )
+    acad_name = name[index]
+    acad_list = AcadsModel.objects.all().order_by("course_id")
+    if len(acad_list) == 0:
+        course_id = 0
+    else:
+        course_id = acad_list.reverse()[0].course_id + 1
+    if len(AcadsModel.objects.filter(course_id=course_id)) == 0:
+        data = AcadsModel(course_id=course_id, name=acad_name, code=course_ids)
+        data.save()
 
 
 # In this list , index + 1 is the room no. (ex- L13 ) and the value at that index is the code associated to it in the url
@@ -108,7 +111,7 @@ soup = BeautifulSoup(r.text, "html.parser")
 
 
 class Job(DailyJob):
-    def execute(self, soup, c):
+    def execute(self, soup):
         pk = 0
         for x in room_ids:
             r = s.post("http://web.iitk.ac.in/lhcbooking/LHC/month.php?room=" + str(x))
@@ -135,42 +138,42 @@ class Job(DailyJob):
                 match = pattern.search(href).group(0)
                 year = match[5:]
 
-                date = parse_date(year + "-" + month + "-" + day_no).strftime(
-                    "%Y-%m-%d"
-                )
+                date = parse_date(year + "-" + month + "-" + day_no)
                 # date = year + "-" + month + "-" + day_no
-                start_time = parse_time(start_time).strftime("%H:%M")
-                end_time = parse_time(end_time).strftime("%H:%M")
+                start_time = parse_time(start_time)
+                end_time = parse_time(end_time)
 
                 if ids.count(course_id) != 0:
                     index = ids.index(course_id)
                     course_name = name[index]
-                    venue = "L" + str(room_ids.index(x))
-                    venue_id = str(room_ids.index(x))
+                    venue = "L" + str(room_ids.index(x) + 1)
+                    venue_id = room_ids.index(x)
                     booln = "True"
                     pk = pk + 1
                     integer = str(pk)
-                    day_long = "False"
-                    hash_tags = ["#acads"]
-                    sql = "INSERT INTO events_eventmodel (event_id,title,date,start_time,end_time,day_long,venue,venue_id,acad_state,hash_tags) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(event_id) DO UPDATE SET title=Excluded.title, date=Excluded.date, start_time=Excluded.start_time, end_time=Excluded.end_time, day_long=Excluded.day_long, venue=Excluded.venue, venue_id=Excluded.venue_id, acad_state=Excluded.acad_state, hash_tags = Excluded.hash_tags"
-                    c.execute(
-                        sql,
-                        (
-                            integer,
-                            course_name,
-                            date,
-                            start_time,
-                            end_time,
-                            day_long,
-                            venue,
-                            venue_id,
-                            booln,
-                            hash_tags,
-                        ),
+                    hash_tags = ["#" + course_id]
+                    eventlist = EventModel.objects.all().order_by("event_id")
+                    if len(eventlist) == 0:
+                        event_id = 0
+                    else:
+                        event_id = eventlist.reverse()[0].event_id
+                    data = EventModel(
+                        event_id=event_id + 1,
+                        title=course_name,
+                        date=date,
+                        start_time=start_time,
+                        end_time=end_time,
+                        day_long=False,
+                        venue=venue,
+                        venue_id=venue_id,
+                        acad_state=True,
+                        hash_tags=hash_tags,
                     )
-                    conn.commit()
-        conn.close()
+                    data.save()
+                    corresponding_acads = AcadsModel.objects.filter(code=course_id)[0]
+                    corresponding_acads.events.add(data)
+                    corresponding_acads.save()
 
 
 x = Job()
-x.execute(soup, c)
+x.execute(soup)

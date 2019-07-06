@@ -16,7 +16,7 @@ class EventModel(models.Model):
     venue = models.CharField(max_length=20)
     venue_id = models.IntegerField(null = True)
     tags = models.ManyToManyField(TagModel)
-    acads = models.ManyToManyField(AcadsModel)
+    acads = models.ManyToManyField(AcadsModel,related_name="events")
     acad_state = models.BooleanField(default=False)
     hash_tags = ArrayField(models.CharField(max_length=40), blank=True, default = list)
     

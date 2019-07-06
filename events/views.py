@@ -98,6 +98,27 @@ class TagEventView(ListAPIView):
             return eventList
         return None
 
+class AcadsEventView(ListAPIView):
+    serializer_class = EventSerializer
+
+    def get_queryset(self):
+        query_month = self.request.GET.get("month")
+        query_year = self.request.GET.get("year")
+        user = IsLoggedIn(self.request)
+        if user is not None:
+            user_acads = user.acads.all()
+            course_id = [ course.code for course in user_acads ]
+
+            eventList = EventModel.objects.filter(event_id=None)
+
+            acads = AcadsModel.objects.all()
+            print(query_month,query_year)
+            for acad_event in user_acads:
+                eventList = eventList | acad_event.events.all()
+
+            return eventList.filter(date__year=query_year,date__month=query_month).order_by("date", "start_time")
+        return None
+
 @api_view(["POST"])
 def CreateEventAPI(request):
     if request.method == "POST":
