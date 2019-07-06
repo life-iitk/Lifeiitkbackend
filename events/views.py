@@ -27,7 +27,7 @@ class MonthEventView(ListAPIView):
         query_year = today.year
         query_year = self.request.GET.get("year")
         if (query_month is not None and query_year is not None):
-            EventList = EventModel.objects.filter(date__year=query_year, date__month=query_month).order_by("date", "start_time")
+            EventList = EventModel.objects.filter(acad_state=False,date__year=query_year, date__month=query_month).order_by("date", "start_time")
             return EventList
         return Response(status = status.HTTP_400_BAD_REQUEST)
 
@@ -111,13 +111,35 @@ class AcadsEventView(ListAPIView):
 
             eventList = EventModel.objects.filter(event_id=None)
 
-            acads = AcadsModel.objects.all()
-            print(query_month,query_year)
             for acad_event in user_acads:
                 eventList = eventList | acad_event.events.all()
 
             return eventList.filter(date__year=query_year,date__month=query_month).order_by("date", "start_time")
         return None
+
+class CalenderAPI(ListAPIView):
+    serializer_class = EventSerializer
+    
+    def get_queryset(self):
+        query_month = self.request.GET.get("month")
+        query_year = self.request.GET.get("year")
+        user = IsLoggedIn(self.request)
+        if user is not None:
+            user_acads = user.acads.all()
+            course_id = [ course.code for course in user_acads ]
+
+            eventList = EventModel.objects.filter(event_id=None)
+
+            print(query_month,query_year)
+            for acad_event in user_acads:
+                eventList = eventList | acad_event.events.all()
+
+            non_academic_events = EventModel.objects.filter(acad_state=False)
+
+            eventList = eventList | non_academic_events
+
+            return eventList.filter(date__year=query_year,date__month=query_month).order_by("date", "start_time")
+        return Response(status = status.HTTP_400_BAD_REQUEST)
 
 @api_view(["POST"])
 def CreateEventAPI(request):

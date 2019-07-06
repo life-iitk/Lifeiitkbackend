@@ -6,6 +6,7 @@ import standalone
 standalone.run("lifeiitkbackend.settings")
 from acads.models import AcadsModel
 from events.models import EventModel
+from tags.models import TagModel
 from bs4 import BeautifulSoup
 import re
 import requests
@@ -21,9 +22,9 @@ semester = input("Enter semester (1 or 2) : ")
 tabula.convert_into(
     "Course_Sem1.pdf", "output1.csv", output_format="csv", pages="all", guess=False
 )
-# tabula.convert_into(
-#     "Course_Sem2.pdf", "output2.csv", output_format="csv", pages="all", guess=False
-# )
+tabula.convert_into(
+    "Course_Sem2.pdf", "output2.csv", output_format="csv", pages="all", guess=False
+)
 
 
 s = requests.Session()
@@ -157,6 +158,13 @@ class Job(DailyJob):
                         event_id = 0
                     else:
                         event_id = eventlist.reverse()[0].event_id
+                    tag_query = TagModel.objects.filter(name="acads")
+                    if len(tag_query) == 0:
+                        tid = TagModel.objects.order_by("tag_id").last().tag_id+1
+                        tag = TagModel(tag_id=tid,name="acads")
+                        tag.save()
+                    else:
+                        tag = tag_query[0]
                     data = EventModel(
                         event_id=event_id + 1,
                         title=course_name,
@@ -169,6 +177,7 @@ class Job(DailyJob):
                         acad_state=True,
                         hash_tags=hash_tags,
                     )
+                    data.tags.add(tag)
                     data.save()
                     corresponding_acads = AcadsModel.objects.filter(code=course_id)[0]
                     corresponding_acads.events.add(data)
