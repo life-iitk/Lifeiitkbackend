@@ -38,7 +38,7 @@ SECRET_KEY = "i9j6n=9!bkmsbp5@a*dv75rg^unb&w^a39gx3#to0u&__^e&x&"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = '*'
 
 
 # Application definition
@@ -106,10 +106,11 @@ WSGI_APPLICATION = "lifeiitkbackend.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": "students",
-        "USER": "aditya",
+        "NAME": "postgres",
+        "USER": "postgres",
         "PASSWORD": get_secret("DB_PASSWORD"),
-        "HOST": "localhost",
+        'HOST': 'db',
+        'PORT': 5432,
     }
 }
 
@@ -148,6 +149,4 @@ STATIC_URL = "/static/"
 
 CORS_ALLOW_CREDENTIALS = True
 
-CORS_ORIGIN_WHITELIST = [
-         'http://localhost:3000'
-     ]
+CORS_ORIGIN_ALLOW_ALL = True

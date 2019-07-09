@@ -33,7 +33,8 @@ class LoginView(APIView):
         user = User.objects.get(username=username)
         
         if user is not None:
-            request.session["username"] = username                      #Starting session manually
+            request.session["username"] = username 
+            request.session.modified = True                     #Starting session manually
             return Response(status = status.HTTP_200_OK)
         
         return Response(status = status.HTTP_400_BAD_REQUEST)
@@ -116,12 +117,12 @@ def user_details(request):
 
         serializer = UserSerializer(user)
         return JsonResponse(serializer.data)
-
+@api_view(['GET'])
 def OwnedTagAPI(request):
     if request.method=='GET':
         user = IsLoggedIn(request)
         if user is None:
-            HttpResponse(status=204)
+            return Response(status=status.HTTP_204_NO_CONTENT)
         serializer = UserOwnedSerializer(user)
 
         return JsonResponse(serializer.data)
