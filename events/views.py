@@ -56,7 +56,7 @@ class FeedEventView(ListAPIView):
                     if tags.tag_id in tag_ids:
                         event_ids.append(objects.event_id)
             return EventModel.objects.filter(event_id__in=event_ids).order_by("date__year", "date__month", "date__day", "start_time")
-        return None
+        return EventModel.objects.all().order_by("date__year", "date__month", "date__day", "start_time")
 
 class Feed_MonthEventView(ListAPIView):
     serializer_class = EventSerializer
