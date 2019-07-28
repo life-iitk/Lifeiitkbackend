@@ -12,6 +12,7 @@ from tags.models import TagModel
 from .utils import IsLoggedIn
 import json
 from django.views.decorators.csrf import csrf_exempt
+from tokens.models import Token
 
 class LoginView(APIView):
     """
@@ -24,6 +25,7 @@ class LoginView(APIView):
             return Response(status = status.HTTP_400_BAD_REQUEST)
         username = request.data.get("username", "")
         password = request.data.get("password", "")
+        token = request.data.get("token","")
         try:
             c = IMAP4('newmailhost.cc.iitk.ac.in')
             c.login(username, password)     #If user can authenticate then he is in our database
@@ -35,6 +37,12 @@ class LoginView(APIView):
         if user is not None:
             request.session["username"] = username 
             request.session.modified = True                     #Starting session manually
+            t = Token.objects.filter(token = token)
+            if len(t) == 0 and token != "undefined":
+                newtoken = Token(token = token)
+                newtoken.save()
+                newtoken.user.add(user)
+                newtoken.save()
             return Response(status = status.HTTP_200_OK)
         
         return Response(status = status.HTTP_400_BAD_REQUEST)
@@ -47,8 +55,12 @@ class LoginView(APIView):
 
 class LogoutView(APIView):
     
-    def get(self, request):
+    def post(self, request):
         if IsLoggedIn(request) is not None:
+            token = request.data.get("token")
+            dtoken = Token.objects.filter(token = token)
+            if len(dtoken) !=0 :
+                dtoken[0].delete()
             del request.session["username"]
             return Response(status = status.HTTP_200_OK)
         return Response(status = status.HTTP_401_UNAUTHORIZED)              #Trying to logout without logging in

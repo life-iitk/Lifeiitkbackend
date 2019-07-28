@@ -8,15 +8,15 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
+        ('users', '0001_initial'),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='AcadsModel',
+            name='Token',
             fields=[
-                ('course_id', models.IntegerField(primary_key=True, serialize=False, unique=True)),
-                ('name', models.CharField(max_length=200)),
-                ('code', models.CharField(max_length=8)),
+                ('token', models.CharField(max_length=100, primary_key=True, serialize=False)),
+                ('user', models.ManyToManyField(related_name='tokens', to='users.User')),
             ],
         ),
     ]
