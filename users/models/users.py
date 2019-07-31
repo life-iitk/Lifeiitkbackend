@@ -21,5 +21,5 @@ class User(models.Model):
     por = JSONField(default=dict, null=True)
     earlier_login = models.BooleanField(default=0, null=True)
     acads = models.ManyToManyField(AcadsModel)
-    owned = models.ManyToManyField(TagModel, through="privilege.privileges")
+    owned = models.ManyToManyField(TagModel, through="privilege.privileges",related_name="admins")
     tags = models.ManyToManyField(TagModel, related_name="tags")

@@ -9,11 +9,11 @@ from rest_framework.response import Response
 from datetime import date
 from rest_framework import status
 from django.db.models import Q
+from users.tasks import notify_new_event
 import datetime
-import re
+import re, time
 
 today = date.today()
-now = datetime.datetime.now()
 
 def sorteventid(val):
     return val[0]
@@ -146,6 +146,7 @@ def CreateEventAPI(request):
     if request.method == "POST":
         user = IsLoggedIn(request)
         if user is not None:
+            # print(request.data)
             owned_tags = user.owned.all()
             title = request.data.get("title")
             description = request.data.get("description")
@@ -162,7 +163,9 @@ def CreateEventAPI(request):
             hash_tags = request.data.get("hash_tags")
             eventlist = EventModel.objects.all().order_by("event_id")
             tags = TagModel.objects.filter(name=tag_name)
-            if len(tags) == 1:
+            now = datetime.datetime.now()
+            date_time_event = datetime.datetime.strptime(date_str+" "+start_time, '%Y-%m-%d %H:%M:%S')
+            if len(tags) == 1 and date_time_event > now :
                 if tags[0] in owned_tags:
                     if len(eventlist) == 0:
                         event_id = 0
@@ -184,6 +187,9 @@ def CreateEventAPI(request):
                     data.save()
                     data.tags.add(tags[0])
                     data.save()
+                    notify_new_event(title,tag_name,schedule=5)
+                    if int((date_time_event-now).total_seconds())-3600 > 0 :
+                        notify_new_event(title,tag_name,schedule=int((date_time_event-now).total_seconds())-3600)
                     return Response(status=status.HTTP_200_OK)
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         return Response(status=status.HTTP_400_BAD_REQUEST)
