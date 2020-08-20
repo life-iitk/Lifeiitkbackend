@@ -45,6 +45,7 @@ class FeedEventView(ListAPIView):
 
     def get_queryset(self):
         user = IsLoggedIn(self.request)
+        now = datetime.datetime.now()
         if user is not None:
             tags = user.tags.all()
             tag_ids = [o.tag_id for o in tags]
@@ -55,8 +56,8 @@ class FeedEventView(ListAPIView):
                 for tags in event_tags:
                     if tags.tag_id in tag_ids:
                         event_ids.append(objects.event_id)
-            return EventModel.objects.filter(event_id__in=event_ids).order_by("date__year", "date__month", "date__day", "start_time")
-        return EventModel.objects.all().order_by("date__year", "date__month", "date__day", "start_time")
+            return EventModel.objects.filter(event_id__in=event_ids).filter(Q(date=now.date()) | Q(date__gt=now.date())).order_by("date__year", "date__month", "date__day", "start_time")
+        return EventModel.objects.filter(Q(date=now.date()) | Q(date__gt=now.date())).order_by("date__year", "date__month", "date__day", "start_time")
 
 class Feed_MonthEventView(ListAPIView):
     serializer_class = EventSerializer
