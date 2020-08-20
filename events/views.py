@@ -87,6 +87,7 @@ class TagEventView(ListAPIView):
         get_query_tag = self.request.GET.get("tag_name")
         query_tag = TagModel.objects.filter(name=get_query_tag)
         #print(query_tag)
+        now = datetime.datetime.now()
         if query_tag.exists():
             tag = query_tag[0]
             eventList = (
