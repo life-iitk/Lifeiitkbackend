@@ -3,7 +3,9 @@ from django.conf import settings
 from django.contrib.postgres.fields import JSONField
 from acads.models import AcadsModel
 from tags.models import TagModel
-
+import string
+import random
+import secrets
 
 class User(models.Model):
     roll = models.CharField(max_length=20, primary_key=True, unique=True)
@@ -23,3 +25,13 @@ class User(models.Model):
     acads = models.ManyToManyField(AcadsModel)
     owned = models.ManyToManyField(TagModel, through="privilege.privileges",related_name="admins")
     tags = models.ManyToManyField(TagModel, related_name="tags")
+    password = models.CharField(max_length=70, null=True, blank=True)
+    activated = models.BooleanField(default=False)
+    verification_code = models.CharField(max_length=70, blank=True, null=True)
+
+    def generate_verification_code(self):
+        """Generates verification code of length 28 made of digits and uppercase letters"""
+        generated = ''.join(secrets.choice(string.ascii_uppercase + string.digits) for i in range(28))
+        self.verification_code = generated
+        self.save()
+        return self.verification_code

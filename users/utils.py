@@ -61,3 +61,9 @@ def send_push_message(token, message, extra=None):
                 'push_response': exc.push_response._asdict(),
             })
         raise self.retry(exc=exc)
+def IsRegistered(request):
+    try:
+        data = User.objects.get(roll=request.data['roll'])
+        return data.activated
+    except:
+        return None

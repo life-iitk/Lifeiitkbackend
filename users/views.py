@@ -9,11 +9,14 @@ from acads.models import AcadsModel
 from .Serializer import UserSerializer , UserOwnedSerializer, UserAcadsSerializer
 from django.http import JsonResponse
 from tags.models import TagModel
-from .utils import IsLoggedIn
+from .utils import *
 import json
 from django.views.decorators.csrf import csrf_exempt
 from tokens.models import Token
-
+from lifeiitkbackend.settings_email import *
+import bcrypt
+from django.http import HttpResponse,JsonResponse
+from django.core.mail import send_mail
 class LoginView(APIView):
     """
     POST auth/login/
@@ -27,25 +30,23 @@ class LoginView(APIView):
         password = request.data.get("password", "")
         token = request.data.get("token","")
         try:
-            c = IMAP4('newmailhost.cc.iitk.ac.in')
-            c.login(username, password)     #If user can authenticate then he is in our database
-        except:
-            return Response(status = status.HTTP_400_BAD_REQUEST)              #Login fails
-
-        user = User.objects.get(username=username)
-        
-        if user is not None:
-            request.session["username"] = username 
-            request.session.modified = True                     #Starting session manually
-            t = Token.objects.filter(token = token)
-            if len(t) == 0 and token != "undefined":
-                newtoken = Token(token = token)
-                newtoken.save()
-                newtoken.user.add(user)
-                newtoken.save()
-            return Response(status = status.HTTP_200_OK)
-        
-        return Response(status = status.HTTP_400_BAD_REQUEST)
+            user = User.objects.get(username = username, activated = True)
+            if user is not None:
+                if bcrypt.checkpw(password.encode(), user.password.encode()):
+                    request.session["username"] = username 
+                    request.session.modified = True
+                    t = Token.objects.filter(token = token)
+                    if len(t) == 0 and token != "undefined":
+                        newtoken = Token(token = token)
+                        newtoken.save()
+                        newtoken.user.add(user)
+                        newtoken.save()
+                    return Response(status = status.HTTP_200_OK)
+                else:
+                    return Response(status = status.HTTP_401_UNAUTHORIZED)
+            
+        except :
+            return Response(status = status.HTTP_401_UNAUTHORIZED)
 
     def get(self, request):
         if IsLoggedIn(request) is not None:
@@ -165,3 +166,142 @@ def UnsubscribeTagsAPI(request):
                 return Response(status=status.HTTP_200_OK)
         return Response(status=status.HTTP_404_NOT_FOUND)
     return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+class RegistrationView(APIView):
+    
+    def post(self, request):
+        if IsRegistered(request) is False:
+            ActivationMailer(request)
+            return Response(status = status.HTTP_202_ACCEPTED)
+        if IsRegistered(request) is True:
+            return Response(status = status.HTTP_403_FORBIDDEN)
+        if IsRegistered(request) is None:
+            return Response(status = status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request):
+        return Response(status = status.HTTP_400_BAD_REQUEST)
+def ActivationMailer(request): 
+    if request.method == "POST":
+        try:
+            roll_no = request.data['roll']
+            user_data = User.objects.get(roll = roll_no)
+            sender = EMAIL_HOST_USER
+            name = user_data.username
+            recipient = name + "@iitk.ac.in"
+            user_code = user_data.generate_verification_code()
+            user_link = EMAIL_LINK["Activation"].format(code = user_code)
+            subject = EMAIL_SUBJECT["Activation"]
+            body = EMAIL_BODY["Activation"].format(name=name, link=user_link)
+            send_mail(subject, body, sender, [recipient], fail_silently=False)
+            return redirect(REDIRECT_LINK["Activation"])
+        except:
+            return HttpResponse("Please set up email host details!", status=206)
+    else :
+        return HttpResponse("Invalid request!", status=400)
+
+def HashPass(password):
+    password=password.encode()
+    return bcrypt.hashpw(password,bcrypt.gensalt())
+
+@api_view(['POST'])
+def SetPasswordAndActivate(request,token):
+    if request.method == "POST":
+        try:
+            pw=request.data['password']
+            user_data=User.objects.get(verification_code=token)
+            if user_data.activated==False:
+                user_data.activated=True
+                user_data.password=HashPass(pw).decode()
+                user_data.save()
+                response={
+                    'status':'success',
+                    'code':status.HTTP_200_OK,
+                    'message':'Password set succesfully and now you are registered',
+                }
+                return Response(response)
+            else:
+                response={
+                'code':'status.HTTP_401_UNAUTHORIZED',
+                'message':'Token already used'}
+                return Response(response,status=401)  
+        except:
+            response={
+                    'code':'status.HTTP_401_UNAUTHORIZED',
+                    'message':'Invalid token or invalid request'
+                }
+            return Response(response,status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return HttpResponse("Invalid Request",status=400)
+
+@api_view(['POST'])
+def ResetPasswordEmail(request):
+    if request.method == "POST":
+        try:
+            roll_no = request.data['roll']
+            user_data = User.objects.get(roll = roll_no)
+            sender = EMAIL_HOST_USER
+            name = user_data.username
+            recipient = name + "@iitk.ac.in"
+            user_code = user_data.generate_verification_code()
+            user_link = EMAIL_LINK["PasswordReset"].format(code = user_code)
+            subject = EMAIL_SUBJECT["PasswordReset"]
+            body = EMAIL_BODY["PasswordReset"].format(name=name, link=user_link)
+            send_mail(subject, body, sender, [recipient], fail_silently=False)
+            return redirect(REDIRECT_LINK["PasswordReset"])
+        except:
+            return HttpResponse("Please set up email host details!", status=206)
+    else :
+        return HttpResponse("Invalid request!", status=400)
+
+def pass_checker(old,password):
+    return bcrypt.checkpw(old.encode(),password)
+
+@api_view(['POST'])
+def ResetPassword(request,token):
+    if request.method == "POST":
+        try:
+            new1=request.data['new_password1']
+            new2=request.data['new_password2']
+            old=request.data['old_password']
+            user_data=User.objects.get(verification_code=token)
+            password=(user_data.password)
+            password=password.encode()
+            if user_data.activated==True:
+                if(new1==new2):
+                    if(pass_checker(old,password)==True):
+                        user_data.password=HashPass(new1).decode()
+                        user_data.save()
+                        response={
+                            'status':'success',
+                            'code':status.HTTP_200_OK,
+                            'message':'Password reset succesfull and now you can login',
+                        }
+                        return Response(response)
+                    else:
+                        response={
+                            'status':'failure',
+                            'code':status.HTTP_401_UNAUTHORIZED,
+                            'message':'wrong old password',
+                        }
+                        return Response(response)
+                else:
+                    response={
+                        'status':'failure',
+                        'code':401,
+                        'message':"the retyped password doesn't match",
+                    }
+                    return Response(response)
+
+            else:
+                response={
+                'code':'status.HTTP_401_UNAUTHORIZED',
+                'message':'Unauthorised user or Account not activated'}
+                return Response(response,status=401)  
+        except:
+            response={
+                    'code':'status.HTTP_401_UNAUTHORIZED',
+                    'message':'Invalid token or invalid request'
+                }
+            return Response(response,status=status.HTTP_401_UNAUTHORIZED)
+    else:
+        return HttpResponse("Invalid Request",status=400) 

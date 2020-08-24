@@ -29,7 +29,7 @@ class MonthEventView(ListAPIView):
         if (query_month is not None and query_year is not None):
             EventList = EventModel.objects.filter(acad_state=False,date__year=query_year, date__month=query_month).order_by("date", "start_time")
             return EventList
-        return Response(status = status.HTTP_400_BAD_REQUEST)
+        return None
 
 class VenueEventView(ListAPIView):
     serializer_class = EventSerializer
@@ -38,11 +38,10 @@ class VenueEventView(ListAPIView):
         query_venue = self.request.GET.get("venue")
         if (query_venue is not None):
             return EventModel.objects.filter(date__year=today.year, date__month=today.month, date__day=today.day, venue_id=query_venue).order_by("start_time")
-        return Response(status = status.HTTP_400_BAD_REQUEST)
+        return None
 
 class FeedEventView(ListAPIView):
-    serializer_class = EventSerializer
-
+    serializer_class = EventSerializer  
     def get_queryset(self):
         user = IsLoggedIn(self.request)
         now = datetime.datetime.now()
@@ -87,7 +86,6 @@ class TagEventView(ListAPIView):
     def get_queryset(self):
         get_query_tag = self.request.GET.get("tag_name")
         query_tag = TagModel.objects.filter(name=get_query_tag)
-        #print(query_tag)
         now = datetime.datetime.now()
         if query_tag.exists():
             tag = query_tag[0]
@@ -149,7 +147,7 @@ def CreateEventAPI(request):
         user = IsLoggedIn(request)
         if user is not None:
             # print(request.data)
-            owned_tags = user.owned.all()
+            owned_tags = user.tags.all() #calling tags wrong way ----corrected that
             title = request.data.get("title")
             description = request.data.get("description")
             date_str = request.data.get("date")

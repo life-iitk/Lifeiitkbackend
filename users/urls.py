@@ -1,4 +1,4 @@
-from .views import LoginView, LogoutView, EditAPI, AcadsAPI, user_details, TagsAPI ,OwnedTagAPI, DeleteAcadAPI, UnsubscribeTagsAPI
+from .views import *
 from django.urls import path
 
 urlpatterns = [
@@ -11,4 +11,8 @@ urlpatterns = [
     path('owned/',OwnedTagAPI),
     path("course/delete/", DeleteAcadAPI),
     path("tags/delete/", UnsubscribeTagsAPI),
+    path('verify/code=<str:token>/',SetPasswordAndActivate,name="email-activator"),
+    path('register/',RegistrationView.as_view(),name="registration"),
+    path('resetpassemail/',ResetPasswordEmail,name="resetpass-email"),
+    path('resetpass/code=<str:token>/',ResetPassword,name="resetpass")
 ]
